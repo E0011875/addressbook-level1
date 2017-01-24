@@ -67,7 +67,7 @@ public class AddressBook {
      * at which java String.format(...) method can insert values.
      * =========================================================================
      */
-    private static final String MESSAGE_ADDED = "New person added: %1$s, Phone: %2$s, Email: %3$s";
+    private static final String MESSAGE_ADDED = "New person added: %1$s, Phone: %2$s, Email: %3$s, Date of birth: %4$s";
     private static final String MESSAGE_ADDRESSBOOK_CLEARED = "Address book has been cleared!";
     private static final String MESSAGE_COMMAND_HELP = "%1$s: %2$s";
     private static final String MESSAGE_COMMAND_HELP_PARAMETERS = "\tParameters: %1$s";
@@ -76,7 +76,7 @@ public class AddressBook {
     private static final String MESSAGE_COMMAND_HELP_EXAMPLE = "\tExample: %1$s";
     private static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted Person: %1$s";
 	private static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited Person: %1$s";
-    private static final String MESSAGE_DISPLAY_PERSON_DATA = "%1$s  Phone Number: %2$s  Email: %3$s";
+    private static final String MESSAGE_DISPLAY_PERSON_DATA = "%1$s  Phone Number: %2$s  Email: %3$s  Date of birth: %4$s";
     private static final String MESSAGE_DISPLAY_LIST_ELEMENT_INDEX = "%1$d. ";
     private static final String MESSAGE_GOODBYE = "Exiting Address Book... Good bye!";
     private static final String MESSAGE_INVALID_COMMAND_FORMAT = "Invalid command format: %1$s " + LS + "%2$s";
@@ -99,16 +99,20 @@ public class AddressBook {
     // These are the prefix strings to define the data type of a command parameter
     private static final String PERSON_DATA_PREFIX_PHONE = "p/";
     private static final String PERSON_DATA_PREFIX_EMAIL = "e/";
+	private static final String PERSON_DATA_PREFIX_DOB = "d/";
 
     private static final String PERSON_STRING_REPRESENTATION = "%1$s " // name
                                                             + PERSON_DATA_PREFIX_PHONE + "%2$s " // phone
-                                                            + PERSON_DATA_PREFIX_EMAIL + "%3$s"; // email
+                                                            + PERSON_DATA_PREFIX_EMAIL + "%3$s" // email
+															+ PERSON_DATA_PREFIX_DOB + "%4$s"; // date of birth
+															
     private static final String COMMAND_ADD_WORD = "add";
     private static final String COMMAND_ADD_DESC = "Adds a person to the address book.";
     private static final String COMMAND_ADD_PARAMETERS = "NAME "
                                                       + PERSON_DATA_PREFIX_PHONE + "PHONE_NUMBER "
-                                                      + PERSON_DATA_PREFIX_EMAIL + "EMAIL";
-    private static final String COMMAND_ADD_EXAMPLE = COMMAND_ADD_WORD + " John Doe p/98765432 e/johnd@gmail.com";
+                                                      + PERSON_DATA_PREFIX_EMAIL + "EMAIL"
+													  + PERSON_DATA_PREFIX_DOB + " DATE_OF_BIRTH";
+    private static final String COMMAND_ADD_EXAMPLE = COMMAND_ADD_WORD + " John Doe p/98765432 e/johnd@gmail.com d/04/22/1996";
 
     private static final String COMMAND_FIND_WORD = "find";
     private static final String COMMAND_FIND_DESC = "Finds all persons whose names contain any of the specified "
@@ -134,9 +138,9 @@ public class AddressBook {
     private static final String COMMAND_EDIT_DESC = "Edit a person identified by the index number used in "
                                                     + "the last find/list call.";
     private static final String COMMAND_EDIT_PARAMETER1 = "INDEX";
-	private static final String COMMAND_EDIT_PARAMETER2 = "John Doe p/98765432 e/johnd@gmail.com";
+	private static final String COMMAND_EDIT_PARAMETER2 = "John Doe p/98765432 e/johnd@gmail.com d/04/22/1996";
     private static final String COMMAND_EDIT_EXAMPLE1 = COMMAND_EDIT_WORD + " 1";
-	private static final String COMMAND_EDIT_EXAMPLE2 = "John Doe p/98765432 e/johnd@gmail.com";
+	private static final String COMMAND_EDIT_EXAMPLE2 = "John Doe p/98765432 e/johnd@gmail.com d/04/22/1996";
 
     private static final String COMMAND_CLEAR_WORD = "clear";
     private static final String COMMAND_CLEAR_DESC = "Clears address book permanently.";
@@ -162,6 +166,7 @@ public class AddressBook {
 	private static final String PERSON_PROPERTY_NAME = "name";
 	private static final String PERSON_PROPERTY_PHONE = "phone";
 	private static final String PERSON_PROPERTY_EMAIL = "email";
+	private static final String PERSON_PROPERTY_DOB = "dob";
 
     /**
      * Offset required to convert between 1-indexing and 0-indexing.COMMAND_
@@ -222,7 +227,9 @@ public class AddressBook {
     public static void main(String[] args) {
         showWelcomeMessage();
         if (args.length >= 2) {
-            showToUser(MESSAGE_INVALID_PROGRAM_ARGS);
+        	String[] myString = new String[1];
+			myString[0] = MESSAGE_INVALID_PROGRAM_ARGS;
+            showToUser(myString);
             exitProgram();
         }
 
@@ -251,11 +258,20 @@ public class AddressBook {
      */
 
     private static void showWelcomeMessage() {
-        showToUser(DIVIDER, DIVIDER, VERSION, MESSAGE_WELCOME, DIVIDER);
+		String[] myString = new String[5];
+		myString[0] = DIVIDER;
+		myString[1] = DIVIDER;
+		myString[2] = VERSION;
+		myString[3] = MESSAGE_WELCOME;
+		myString[4] = DIVIDER;
+		showToUser(myString);
     }
 
     private static void showResultToUser(String result) {
-        showToUser(result, DIVIDER);
+		String[] myString = new String[2];
+		myString[0] = result;
+		myString[1] = DIVIDER;
+		showToUser(myString);
     }
 
     /*
@@ -270,7 +286,9 @@ public class AddressBook {
      * Echoes the user input back to the user.
      */
     private static void echoUserCommand(String userCommand) {
-        showToUser("[Command entered:" + userCommand + "]");
+		String[] myString = new String[1];
+		myString[0] = "[Command entered:" + userCommand + "]";
+		showToUser(myString);
     }
 
     /**
@@ -281,7 +299,9 @@ public class AddressBook {
     private static void setupGivenFileForStorage(String filePath) {
 
         if (!isValidFilePath(filePath)) {
-            showToUser(String.format(MESSAGE_INVALID_FILE, filePath));
+			String[] myString = new String[1];
+			myString[0] = String.format(MESSAGE_INVALID_FILE, filePath);
+			showToUser(myString);
             exitProgram();
         }
 
@@ -293,7 +313,11 @@ public class AddressBook {
      * Displays the goodbye message and exits the runtime.
      */
     private static void exitProgram() {
-        showToUser(MESSAGE_GOODBYE, DIVIDER, DIVIDER);
+		String[] myString = new String[3];
+		myString[0] = MESSAGE_GOODBYE;
+		myString[1] = DIVIDER;
+		myString[2] = DIVIDER;
+        showToUser(myString);
         System.exit(0);
     }
 
@@ -303,7 +327,9 @@ public class AddressBook {
      * Exits program if the file cannot be created.
      */
     private static void setupDefaultFileForStorage() {
-        showToUser(MESSAGE_USING_DEFAULT_FILE);
+		String[] myString = new String[1];
+		myString[0] = MESSAGE_USING_DEFAULT_FILE;
+        showToUser(myString);
         storageFilePath = DEFAULT_STORAGE_FILEPATH;
         createFileIfMissing(storageFilePath);
     }
@@ -458,7 +484,7 @@ public class AddressBook {
      */
     private static String getMessageForSuccessfulAddPerson(HashMap<String, String> addedPerson) {
         return String.format(MESSAGE_ADDED,
-                getNameFromPerson(addedPerson), getPhoneFromPerson(addedPerson), getEmailFromPerson(addedPerson));
+                getNameFromPerson(addedPerson), getPhoneFromPerson(addedPerson), getEmailFromPerson(addedPerson), getDOBFromPerson(addedPerson));
     }
 
     /**
@@ -703,10 +729,12 @@ public class AddressBook {
     /**
      * Shows a message to the user
      */
-    private static void showToUser(String... message) {
-        for (String m : message) {
-            System.out.println(LINE_PREFIX + m);
-        }
+    private static void showToUser(String[] message) {
+		for (int i=0; i < message.length; i++){
+
+			System.out.println(LINE_PREFIX + message[i]);
+		}
+
     }
 
     /**
@@ -716,7 +744,9 @@ public class AddressBook {
      */
     private static void showToUser(ArrayList<HashMap<String, String>> persons) {
         String listAsString = getDisplayString(persons);
-        showToUser(listAsString);
+		String[] myString = new String[1];
+		myString[0] = listAsString;
+        showToUser(myString);
         updateLatestViewedPersonListing(persons);
     }
 
@@ -754,7 +784,7 @@ public class AddressBook {
      */
     private static String getMessageForFormattedPersonData(HashMap<String, String> person) {
         return String.format(MESSAGE_DISPLAY_PERSON_DATA,
-                getNameFromPerson(person), getPhoneFromPerson(person), getEmailFromPerson(person));
+                getNameFromPerson(person), getPhoneFromPerson(person), getEmailFromPerson(person), getDOBFromPerson(person));
     }
 
     /**
@@ -794,14 +824,22 @@ public class AddressBook {
         if (storageFile.exists()) {
             return;
         }
+		
+		String[] myString = new String[1];
+		myString[0] = String.format(MESSAGE_ERROR_MISSING_STORAGE_FILE, filePath);
+        showToUser(myString);
 
-        showToUser(String.format(MESSAGE_ERROR_MISSING_STORAGE_FILE, filePath));
 
+		
         try {
             storageFile.createNewFile();
-            showToUser(String.format(MESSAGE_STORAGE_FILE_CREATED, filePath));
+			String[] myString1 = new String[1];
+			myString1[0] = String.format(MESSAGE_STORAGE_FILE_CREATED, filePath);
+            showToUser(myString1);
         } catch (IOException ioe) {
-            showToUser(String.format(MESSAGE_ERROR_CREATING_STORAGE_FILE, filePath));
+			String[] myString1 = new String[1];
+			myString1[0] = String.format(MESSAGE_ERROR_CREATING_STORAGE_FILE, filePath);
+            showToUser(myString1);
             exitProgram();
         }
     }
@@ -816,7 +854,9 @@ public class AddressBook {
     private static ArrayList<HashMap<String, String>> loadPersonsFromFile(String filePath) {
         final Optional<ArrayList<HashMap<String, String>>> successfullyDecoded = decodePersonsFromStrings(getLinesInFile(filePath));
         if (!successfullyDecoded.isPresent()) {
-            showToUser(MESSAGE_INVALID_STORAGE_FILE_CONTENT);
+			String[] myString = new String[1];
+			myString[0] = String.format(MESSAGE_INVALID_STORAGE_FILE_CONTENT);
+            showToUser(myString);
             exitProgram();
         }
         return successfullyDecoded.get();
@@ -831,10 +871,14 @@ public class AddressBook {
         try {
             lines = new ArrayList<>(Files.readAllLines(Paths.get(filePath)));
         } catch (FileNotFoundException fnfe) {
-            showToUser(String.format(MESSAGE_ERROR_MISSING_STORAGE_FILE, filePath));
+			String[] myString = new String[1];
+			myString[0] = String.format(MESSAGE_ERROR_MISSING_STORAGE_FILE, filePath);
+            showToUser(myString);
             exitProgram();
         } catch (IOException ioe) {
-            showToUser(String.format(MESSAGE_ERROR_READING_FROM_FILE, filePath));
+            String[] myString = new String[1];
+			myString[0] = String.format(MESSAGE_ERROR_READING_FROM_FILE, filePath);
+            showToUser(myString);
             exitProgram();
         }
         return lines;
@@ -850,7 +894,9 @@ public class AddressBook {
         try {
             Files.write(Paths.get(storageFilePath), linesToWrite);
         } catch (IOException ioe) {
-            showToUser(String.format(MESSAGE_ERROR_WRITING_TO_FILE, filePath));
+			String[] myString = new String[1];
+			myString[0] = String.format(MESSAGE_ERROR_WRITING_TO_FILE, filePath);
+            showToUser(myString);
             exitProgram();
         }
     }
@@ -960,6 +1006,10 @@ public class AddressBook {
     private static String getEmailFromPerson(HashMap<String, String> person) {
         return person.get(PERSON_PROPERTY_EMAIL);
     }
+	
+	private static String getDOBFromPerson(HashMap<String, String> person) {
+        return person.get(PERSON_PROPERTY_DOB);
+    }
 
     /**
      * Creates a person from the given data.
@@ -969,11 +1019,12 @@ public class AddressBook {
      * @param email without data prefix
      * @return constructed person
      */
-    private static HashMap<String, String> makePersonFromData(String name, String phone, String email) {
+    private static HashMap<String, String> makePersonFromData(String name, String phone, String email, String dob) {
         HashMap<String,String> newPerson = new HashMap<>();
 		newPerson.put(PERSON_PROPERTY_NAME, name);
 		newPerson.put(PERSON_PROPERTY_PHONE, phone);
 		newPerson.put(PERSON_PROPERTY_EMAIL, email);
+		newPerson.put(PERSON_PROPERTY_DOB, dob);
         return newPerson;
     }
 
@@ -985,7 +1036,7 @@ public class AddressBook {
      */
     private static String encodePersonToString(HashMap<String, String> person) {
         return String.format(PERSON_STRING_REPRESENTATION,
-                getNameFromPerson(person), getPhoneFromPerson(person), getEmailFromPerson(person));
+                getNameFromPerson(person), getPhoneFromPerson(person), getEmailFromPerson(person), getDOBFromPerson(person));
     }
 
     /**
@@ -1024,7 +1075,8 @@ public class AddressBook {
         final HashMap<String, String> decodedPerson = makePersonFromData(
                 extractNameFromPersonString(encoded),
                 extractPhoneFromPersonString(encoded),
-                extractEmailFromPersonString(encoded)
+                extractEmailFromPersonString(encoded),
+				extractDOBFromPersonString(encoded)
         );
         // check that the constructed person is valid
         return isPersonDataValid(decodedPerson) ? Optional.of(decodedPerson) : Optional.empty();
@@ -1056,12 +1108,13 @@ public class AddressBook {
      * @param personData person string representation
      */
     private static boolean isPersonDataExtractableFrom(String personData) {
-        final String matchAnyPersonDataPrefix = PERSON_DATA_PREFIX_PHONE + '|' + PERSON_DATA_PREFIX_EMAIL;
+        final String matchAnyPersonDataPrefix = PERSON_DATA_PREFIX_PHONE + '|' + PERSON_DATA_PREFIX_EMAIL + '|' + PERSON_DATA_PREFIX_DOB;
         final String[] splitArgs = personData.trim().split(matchAnyPersonDataPrefix);
-        return splitArgs.length == 3 // 3 arguments
+        return splitArgs.length == 4 // 4 arguments
                 && !splitArgs[0].isEmpty() // non-empty arguments
                 && !splitArgs[1].isEmpty()
-                && !splitArgs[2].isEmpty();
+                && !splitArgs[2].isEmpty()
+				&& !splitArgs[3].isEmpty();
     }
 
     /**
@@ -1087,10 +1140,12 @@ public class AddressBook {
     private static String extractPhoneFromPersonString(String encoded) {
         final int indexOfPhonePrefix = encoded.indexOf(PERSON_DATA_PREFIX_PHONE);
         final int indexOfEmailPrefix = encoded.indexOf(PERSON_DATA_PREFIX_EMAIL);
+        final int indexOfDOBPrefix = encoded.indexOf(PERSON_DATA_PREFIX_DOB);
 
         // phone is last arg, target is from prefix to end of string
         if (indexOfPhonePrefix > indexOfEmailPrefix) {
-            return removePrefix(encoded.substring(indexOfPhonePrefix, encoded.length()).trim(),
+            return removePrefix(
+                    encoded.substring(indexOfPhonePrefix, indexOfDOBPrefix).trim(),
                     PERSON_DATA_PREFIX_PHONE);
 
         // phone is middle arg, target is from own prefix to next prefix
@@ -1110,10 +1165,12 @@ public class AddressBook {
     private static String extractEmailFromPersonString(String encoded) {
         final int indexOfPhonePrefix = encoded.indexOf(PERSON_DATA_PREFIX_PHONE);
         final int indexOfEmailPrefix = encoded.indexOf(PERSON_DATA_PREFIX_EMAIL);
+        final int indexOfDOBPrefix = encoded.indexOf(PERSON_DATA_PREFIX_DOB);
 
         // email is last arg, target is from prefix to end of string
         if (indexOfEmailPrefix > indexOfPhonePrefix) {
-            return removePrefix(encoded.substring(indexOfEmailPrefix, encoded.length()).trim(),
+            return removePrefix(
+                    encoded.substring(indexOfEmailPrefix, indexOfDOBPrefix).trim(),
                     PERSON_DATA_PREFIX_EMAIL);
 
         // email is middle arg, target is from own prefix to next prefix
@@ -1121,6 +1178,23 @@ public class AddressBook {
             return removePrefix(
                     encoded.substring(indexOfEmailPrefix, indexOfPhonePrefix).trim(),
                     PERSON_DATA_PREFIX_EMAIL);
+        }
+    }
+	
+	private static String extractDOBFromPersonString(String encoded) {
+        final int indexOfEmailPrefix = encoded.indexOf(PERSON_DATA_PREFIX_EMAIL);
+		final int indexOfDOBPrefix = encoded.indexOf(PERSON_DATA_PREFIX_DOB);
+
+        // email is last arg, target is from prefix to end of string
+        if (indexOfDOBPrefix > indexOfEmailPrefix) {
+            return removePrefix(encoded.substring(indexOfDOBPrefix, encoded.length()).trim(),
+                    PERSON_DATA_PREFIX_DOB);
+
+        // email is middle arg, target is from own prefix to next prefix
+        } else {
+            return removePrefix(
+                    encoded.substring(indexOfDOBPrefix, indexOfEmailPrefix).trim(),
+                    PERSON_DATA_PREFIX_DOB);
         }
     }
 
@@ -1132,7 +1206,8 @@ public class AddressBook {
     private static boolean isPersonDataValid(HashMap<String, String> person) {
         return isPersonNameValid(person.get(PERSON_PROPERTY_NAME))
                 && isPersonPhoneValid(person.get(PERSON_PROPERTY_PHONE))
-                && isPersonEmailValid(person.get(PERSON_PROPERTY_EMAIL));
+                && isPersonEmailValid(person.get(PERSON_PROPERTY_EMAIL))
+                && isPersonDOBValid(person.get(PERSON_PROPERTY_DOB));
     }
 
     /*
@@ -1171,6 +1246,11 @@ public class AddressBook {
      */
     private static boolean isPersonEmailValid(String email) {
         return email.matches("\\S+@\\S+\\.\\S+"); // email is [non-whitespace]@[non-whitespace].[non-whitespace]
+        //TODO: implement a more permissive validation
+    }
+	
+	private static boolean isPersonDOBValid(String dob) {
+        return dob.matches("\\d{2}+/\\d{2}+/\\d{4}+");    // phone nonempty sequence of digits
         //TODO: implement a more permissive validation
     }
 
