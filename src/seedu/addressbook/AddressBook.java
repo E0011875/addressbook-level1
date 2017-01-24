@@ -71,8 +71,11 @@ public class AddressBook {
     private static final String MESSAGE_ADDRESSBOOK_CLEARED = "Address book has been cleared!";
     private static final String MESSAGE_COMMAND_HELP = "%1$s: %2$s";
     private static final String MESSAGE_COMMAND_HELP_PARAMETERS = "\tParameters: %1$s";
+	private static final String MESSAGE_COMMAND_HELP_PARAMETER1 = "\tParameter 1: %1$s";
+	private static final String MESSAGE_COMMAND_HELP_PARAMETER2 = "\tParameter 2: %1$s";
     private static final String MESSAGE_COMMAND_HELP_EXAMPLE = "\tExample: %1$s";
     private static final String MESSAGE_DELETE_PERSON_SUCCESS = "Deleted Person: %1$s";
+	private static final String MESSAGE_EDIT_PERSON_SUCCESS = "Edited Person: %1$s";
     private static final String MESSAGE_DISPLAY_PERSON_DATA = "%1$s  Phone Number: %2$s  Email: %3$s";
     private static final String MESSAGE_DISPLAY_LIST_ELEMENT_INDEX = "%1$d. ";
     private static final String MESSAGE_GOODBYE = "Exiting Address Book... Good bye!";
@@ -126,6 +129,14 @@ public class AddressBook {
                                                     + "the last find/list call.";
     private static final String COMMAND_DELETE_PARAMETER = "INDEX";
     private static final String COMMAND_DELETE_EXAMPLE = COMMAND_DELETE_WORD + " 1";
+	
+	private static final String COMMAND_EDIT_WORD = "edit";
+    private static final String COMMAND_EDIT_DESC = "Edit a person identified by the index number used in "
+                                                    + "the last find/list call.";
+    private static final String COMMAND_EDIT_PARAMETER1 = "INDEX";
+	private static final String COMMAND_EDIT_PARAMETER2 = "John Doe p/98765432 e/johnd@gmail.com";
+    private static final String COMMAND_EDIT_EXAMPLE1 = COMMAND_EDIT_WORD + " 1";
+	private static final String COMMAND_EDIT_EXAMPLE2 = "John Doe p/98765432 e/johnd@gmail.com";
 
     private static final String COMMAND_CLEAR_WORD = "clear";
     private static final String COMMAND_CLEAR_DESC = "Clears address book permanently.";
@@ -151,15 +162,6 @@ public class AddressBook {
 	private static final String PERSON_PROPERTY_NAME = "name";
 	private static final String PERSON_PROPERTY_PHONE = "phone";
 	private static final String PERSON_PROPERTY_EMAIL = "email";
-	
-    private static final int PERSON_DATA_INDEX_NAME = 0;
-    private static final int PERSON_DATA_INDEX_PHONE = 1;
-    private static final int PERSON_DATA_INDEX_EMAIL = 2;
-
-    /**
-     * The number of data elements for a single person.
-     */
-    private static final int PERSON_DATA_COUNT = 3;
 
     /**
      * Offset required to convert between 1-indexing and 0-indexing.COMMAND_
@@ -379,6 +381,8 @@ public class AddressBook {
             return sortAllPersonsInAddressBook();
         case COMMAND_DELETE_WORD:
             return executeDeletePerson(commandArgs);
+		case COMMAND_EDIT_WORD:
+            return executeEditPerson(commandArgs);
         case COMMAND_CLEAR_WORD:
             return executeClearAddressBook();
         case COMMAND_HELP_WORD:
@@ -420,7 +424,6 @@ public class AddressBook {
     private static String executeAddPerson(String commandArgs) {
         // try decoding a person from the raw args
         final Optional<HashMap<String, String>> decodeResult = decodePersonFromString(commandArgs);
-
         // checks if args are valid (decode result will not be present if the person is invalid)
         if (!decodeResult.isPresent()) {
             return getMessageForInvalidCommandInput(COMMAND_ADD_WORD, getUsageInfoForAddCommand());
@@ -430,6 +433,20 @@ public class AddressBook {
         final HashMap<String, String> personToAdd = decodeResult.get();
         addPersonToAddressBook(personToAdd);
         return getMessageForSuccessfulAddPerson(personToAdd);
+    }
+	
+	private static boolean executeAddPersonAfterEdit(String commandArgs, int index) {
+        // try decoding a person from the raw args
+        final Optional<HashMap<String, String>> decodeResult = decodePersonFromString(commandArgs);
+        // checks if args are valid (decode result will not be present if the person is invalid)
+        if (!decodeResult.isPresent()) {
+            return false;
+        }
+
+        // add the person as specified
+        final HashMap<String, String> personToAdd = decodeResult.get();
+		replacePersonInAddressBook(personToAdd, index);
+        return true;
     }
 
     /**
@@ -486,16 +503,16 @@ public class AddressBook {
      */
     private static ArrayList<HashMap<String, String>> getPersonsWithNameContainingAnyKeyword(Collection<String> keywords) {
         final ArrayList<HashMap<String, String>> matchedPersons = new ArrayList<>();
+		final Set<String> keyWordsInNameInUpperCase = changeWordsInNameToUpperCase(new HashSet<String>(keywords));
         for (HashMap<String, String> person : getAllPersonsInAddressBook()) {
             final Set<String> wordsInName = new HashSet<>(splitByWhitespace(getNameFromPerson(person)));
             final Set<String> wordsInNameInLowerCase = changeWordsInNameToLowerCase(wordsInName);
-			if (!Collections.disjoint(wordsInName, keywords)) {
-                matchedPersons.add(person);
-            }
-			
+			final Set<String> wordsInNameInUpperCase = changeWordsInNameToUpperCase(wordsInName);
 			if (!Collections.disjoint(wordsInNameInLowerCase, keywords)) {
                 matchedPersons.add(person);
-            }
+            } else if (!Collections.disjoint(wordsInNameInUpperCase, keyWordsInNameInUpperCase)){
+				matchedPersons.add(person);
+			}
         }
         return matchedPersons;
     }
@@ -504,6 +521,14 @@ public class AddressBook {
 		final Set<String> temp = new HashSet<String>();
 		for (String word : wordsInName) {
 			temp.add(word.toLowerCase());
+		}
+		return temp;
+	}
+	
+	private static Set<String> changeWordsInNameToUpperCase(Set<String> wordsInName){
+		final Set<String> temp = new HashSet<String>();
+		for (String word : wordsInName) {
+			temp.add(word.toUpperCase());
 		}
 		return temp;
 	}
@@ -526,6 +551,19 @@ public class AddressBook {
         return deletePersonFromAddressBook(targetInModel) ? getMessageForSuccessfulDelete(targetInModel) // success
                                                           : MESSAGE_PERSON_NOT_IN_ADDRESSBOOK; // not found
     }
+	
+	private static String executeEditPerson(String commandArgs) {
+        if (!isEditPersonArgsValid(commandArgs)) {
+            return getMessageForInvalidCommandInput(COMMAND_EDIT_WORD, getUsageInfoForEditCommand());
+        }
+        final int targetVisibleIndex = extractTargetIndexFromEditPersonArgs(commandArgs);
+        if (!isDisplayIndexValidForLastPersonListingView(targetVisibleIndex)) {
+            return MESSAGE_INVALID_PERSON_DISPLAYED_INDEX;
+        }
+        final HashMap<String, String> targetInModel = getPersonByLastVisibleIndex(targetVisibleIndex);
+        return editPersonFromAddressBook(targetInModel) ? getMessageForSuccessfulEdit(targetInModel) // success
+                                                          : getMessageForInvalidCommandInput(COMMAND_EDIT_WORD, getUsageInfoForEditCommand());
+    }
 
     /**
      * Checks validity of delete person argument string's format.
@@ -541,6 +579,15 @@ public class AddressBook {
             return false;
         }
     }
+	
+	private static boolean isEditPersonArgsValid(String rawArgs) {
+        try {
+            final int extractedIndex = Integer.parseInt(rawArgs.trim()); // use standard libraries to parse
+            return extractedIndex >= DISPLAYED_INDEX_OFFSET;
+        } catch (NumberFormatException nfe) {
+            return false;
+        }
+    }
 
     /**
      * Extracts the target's index from the raw delete person args string
@@ -549,6 +596,10 @@ public class AddressBook {
      * @return extracted index
      */
     private static int extractTargetIndexFromDeletePersonArgs(String rawArgs) {
+        return Integer.parseInt(rawArgs.trim());
+    }
+	
+	private static int extractTargetIndexFromEditPersonArgs(String rawArgs) {
         return Integer.parseInt(rawArgs.trim());
     }
 
@@ -571,6 +622,10 @@ public class AddressBook {
      */
     private static String getMessageForSuccessfulDelete(HashMap<String, String> deletedPerson) {
         return String.format(MESSAGE_DELETE_PERSON_SUCCESS, getMessageForFormattedPersonData(deletedPerson));
+    }
+	
+	private static String getMessageForSuccessfulEdit(HashMap<String, String> editedPerson) {
+        return String.format(MESSAGE_EDIT_PERSON_SUCCESS, getMessageForFormattedPersonData(editedPerson));
     }
 
     /**
@@ -620,6 +675,16 @@ public class AddressBook {
      */
     private static String getUserInput() {
         System.out.print(LINE_PREFIX + "Enter command: ");
+        String inputLine = SCANNER.nextLine();
+        // silently consume all blank and comment lines
+        while (inputLine.trim().isEmpty() || inputLine.trim().charAt(0) == INPUT_COMMENT_MARKER) {
+            inputLine = SCANNER.nextLine();
+        }
+        return inputLine;
+    }
+	
+	private static String getUserInputForEdit() {
+        System.out.print(LINE_PREFIX + "Enter new properties: ");
         String inputLine = SCANNER.nextLine();
         // silently consume all blank and comment lines
         while (inputLine.trim().isEmpty() || inputLine.trim().charAt(0) == INPUT_COMMENT_MARKER) {
@@ -806,6 +871,11 @@ public class AddressBook {
         ALL_PERSONS.add(person);
         savePersonsToFile(getAllPersonsInAddressBook(), storageFilePath);
     }
+	
+	private static void replacePersonInAddressBook(HashMap<String,String> person, int index) {
+        ALL_PERSONS.set(index, person);
+        savePersonsToFile(getAllPersonsInAddressBook(), storageFilePath);
+    }
 
     /**
      * Deletes the specified person from the addressbook if it is inside. Saves any changes to storage file.
@@ -815,6 +885,17 @@ public class AddressBook {
      */
     private static boolean deletePersonFromAddressBook(HashMap<String,String> exactPerson) {
         final boolean changed = ALL_PERSONS.remove(exactPerson);
+        if (changed) {
+            savePersonsToFile(getAllPersonsInAddressBook(), storageFilePath);
+        }
+        return changed;
+    }
+	
+	private static boolean editPersonFromAddressBook(HashMap<String,String> exactPerson) {
+		String userInputForEdit = getUserInputForEdit();
+		echoUserCommand(userInputForEdit);
+		int index = ALL_PERSONS.indexOf(exactPerson);
+		boolean changed = executeAddPersonAfterEdit(userInputForEdit, index); 
         if (changed) {
             savePersonsToFile(getAllPersonsInAddressBook(), storageFilePath);
         }
@@ -989,7 +1070,7 @@ public class AddressBook {
      * @param encoded person string representation
      * @return name argument
      */
-    private static String extractNameFromPersonString(String encoded) {
+    private static String extractNameFromPersonString(String encoded) { 
         final int indexOfPhonePrefix = encoded.indexOf(PERSON_DATA_PREFIX_PHONE);
         final int indexOfEmailPrefix = encoded.indexOf(PERSON_DATA_PREFIX_EMAIL);
         // name is leading substring up to first data prefix symbol
@@ -1107,6 +1188,7 @@ public class AddressBook {
                 + getUsageInfoForViewCommand() + LS
 				+ getUsageInfoForSortCommand() + LS
                 + getUsageInfoForDeleteCommand() + LS
+				+ getUsageInfoForEditCommand() + LS
                 + getUsageInfoForClearCommand() + LS
                 + getUsageInfoForExitCommand() + LS
                 + getUsageInfoForHelpCommand();
@@ -1131,6 +1213,14 @@ public class AddressBook {
         return String.format(MESSAGE_COMMAND_HELP, COMMAND_DELETE_WORD, COMMAND_DELETE_DESC) + LS
                 + String.format(MESSAGE_COMMAND_HELP_PARAMETERS, COMMAND_DELETE_PARAMETER) + LS
                 + String.format(MESSAGE_COMMAND_HELP_EXAMPLE, COMMAND_DELETE_EXAMPLE) + LS;
+    }
+	
+	private static String getUsageInfoForEditCommand() {
+        return String.format(MESSAGE_COMMAND_HELP, COMMAND_EDIT_WORD, COMMAND_EDIT_DESC) + LS
+                + String.format(MESSAGE_COMMAND_HELP_PARAMETER1, COMMAND_EDIT_PARAMETER1) + LS
+				+ String.format(MESSAGE_COMMAND_HELP_PARAMETER2, COMMAND_EDIT_PARAMETER2) + LS
+                + String.format(MESSAGE_COMMAND_HELP_EXAMPLE, COMMAND_EDIT_EXAMPLE1) + LS
+				+ String.format("%1$" + (14 + COMMAND_EDIT_EXAMPLE2.length()) + "s", COMMAND_EDIT_EXAMPLE2) + LS;
     }
 
     /** Returns string for showing 'clear' command usage instruction */
