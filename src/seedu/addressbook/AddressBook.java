@@ -177,6 +177,15 @@ public class AddressBook {
      * If the first non-whitespace character in a user's input line is this, that line will be ignored.
      */
     private static final char INPUT_COMMENT_MARKER = '#';
+	
+
+     
+    /**
+     * Symbolic constants for the process main method arguments
+     */
+    private static final int INCORRECT_FILE = 2;
+    private static final int FILE_GIVEN = 1;
+    private static final int NO_FILE_SPECIFIED = 0;
 
     /*
      * This variable is declared for the whole class (instead of declaring it
@@ -226,18 +235,18 @@ public class AddressBook {
 	 
     public static void main(String[] args) {
         showWelcomeMessage();
-        if (args.length >= 2) {
+        if (args.length >= INCORRECT_FILE) {
         	String[] myString = new String[1];
 			myString[0] = MESSAGE_INVALID_PROGRAM_ARGS;
             showToUser(myString);
             exitProgram();
         }
 
-        if (args.length == 1) {
+        if (args.length == FILE_GIVEN) {
             setupGivenFileForStorage(args[0]);
         }
 
-        if(args.length == 0) {
+        if(args.length == NO_FILE_SPECIFIED) {
             setupDefaultFileForStorage();
         }
         loadDataFromStorage();
